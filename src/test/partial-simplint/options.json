@@ -1,5 +1,4 @@
 {
-  "api-modules": ["app.cli"],
   "api-packages": ["app"],
   "docstring-style": "rst",
   "extend-fixable": ["SMP201"],
@@ -15,7 +14,9 @@
   "fixable": ["SMP1"],
   "ignore": ["SMP601"],
   "imports": {
-    "module-attributes": ["app.settings"]
+    "module-attribute-scope": ["project", "stdlib"],
+    "module-attributes": ["app.settings"],
+    "require-lazy-modules": true
   },
   "logic": {
     "max-caller-statements": 30,

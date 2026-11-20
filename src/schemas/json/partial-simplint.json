@@ -5,22 +5,23 @@
   "description": "simplint configuration ([tool.simplint] in pyproject.toml)",
   "type": "object",
   "properties": {
-    "api-modules": {
-      "description": "Modules of a library, besides its top-level packages, that users import from directly. Their `__all__` is the\ninterface you declare, so `unused-export` (`SMP402`) keeps names no module of the project imports.",
+    "api-packages": {
+      "description": "Packages and modules that can expose a library's public API. When unset, simplint tries the build backend's\npackage list, then packages with `py.typed`, then a package or module named for the project. If none match,\npublic import paths outside `doc`, `docs` and the tests qualify. An explicit empty list selects no packages.",
       "type": ["array"],
       "items": {
         "type": "string"
       }
     },
-    "api-packages": {
-      "description": "The top-level packages and modules a library ships, whose modules make up its public API. By default they come\nfrom the build backend's settings, then from the packages holding a `py.typed` marker, then from the package\nnamed after the project; when none is found, every module outside `docs` and the tests counts.",
-      "type": ["array"],
-      "items": {
-        "type": "string"
-      }
+    "classes": {
+      "description": "Options for the class rules.",
+      "anyOf": [
+        {
+          "$ref": "#/definitions/ClassesOptions"
+        }
+      ]
     },
     "docstring-style": {
-      "description": "The markup of docstrings, which the reStructuredText rules, `SMP910` to `SMP925`, check: `\"rst\"` for\nreStructuredText field lists, such as `:param name:`, `:returns:` and `:raises Error:`. Unset, those rules do not\nreport.",
+      "description": "Set to `\"rst\"` to check reStructuredText docstrings with `SMP910` through `SMP925`. These rules check inline\nmarkup and fields such as `:param name:`, `:returns:` and `:raises Error:`. They skip files when this is unset.",
       "anyOf": [
         {
           "$ref": "#/definitions/DocstringStyle"
@@ -28,14 +29,14 @@
       ]
     },
     "extend-fixable": {
-      "description": "A list of rule codes, prefixes or names to consider fixable, in addition to those specified by\n[`fixable`](#fixable).",
+      "description": "Allow fixes for additional rules beyond [`fixable`](#fixable).",
       "type": "array",
       "items": {
         "$ref": "#/definitions/RuleSelector"
       }
     },
     "extend-per-file-ignores": {
-      "description": "A list of mappings from file pattern to rule codes, prefixes or names to exclude, in addition to any rules\nexcluded by [`per-file-ignores`](#per-file-ignores).",
+      "description": "Add patterns and rule selectors to [`per-file-ignores`](#per-file-ignores).",
       "type": "object",
       "additionalProperties": {
         "type": "array",
@@ -45,50 +46,50 @@
       }
     },
     "extend-safe-fixes": {
-      "description": "A list of rule codes, prefixes or names for which unsafe fixes should be considered safe.",
+      "description": "Treat unsafe fixes as safe for rules matching these codes, code prefixes or names.",
       "type": "array",
       "items": {
         "$ref": "#/definitions/RuleSelector"
       }
     },
     "extend-select": {
-      "description": "A list of rule codes, prefixes or names to enable, in addition to those specified by [`select`](#select).",
+      "description": "Enable additional rules using the same selectors as [`select`](#select).",
       "type": "array",
       "items": {
         "$ref": "#/definitions/RuleSelector"
       }
     },
     "extend-unfixable": {
-      "description": "A list of rule codes, prefixes or names to consider non-fixable, in addition to those specified by\n[`unfixable`](#unfixable).",
+      "description": "Disable fixes for additional rules beyond [`unfixable`](#unfixable).",
       "type": "array",
       "items": {
         "$ref": "#/definitions/RuleSelector"
       }
     },
     "extend-unsafe-fixes": {
-      "description": "A list of rule codes, prefixes or names for which safe fixes should be considered unsafe.",
+      "description": "Require unsafe fixes to be enabled for rules matching these codes, code prefixes or names.",
       "type": "array",
       "items": {
         "$ref": "#/definitions/RuleSelector"
       }
     },
     "fix": {
-      "description": "Enable fix behavior by-default when running `simplint` (overridden by the `--fix` and `--no-fix` command-line\nflags). Only includes automatic fixes unless `--unsafe-fixes` is provided.",
+      "description": "Apply safe fixes by default with `simplint check`. Enable `unsafe-fixes` to include unsafe fixes.\nThe `--fix` and `--no-fix` flags override this setting.",
       "type": ["boolean"]
     },
     "fix-only": {
-      "description": "Like [`fix`](#fix), but disables reporting on leftover violation. Implies [`fix`](#fix).",
+      "description": "Apply fixes and omit remaining violations from the report and exit status. Implies [`fix`](#fix).",
       "type": ["boolean"]
     },
     "fixable": {
-      "description": "A list of rule codes, prefixes or names to consider fixable. By default, all rules are considered fixable.",
+      "description": "Allow fixes for the selected rules. By default, simplint can offer any fix a rule provides.",
       "type": "array",
       "items": {
         "$ref": "#/definitions/RuleSelector"
       }
     },
     "ignore": {
-      "description": "A list of rule codes, prefixes or names to ignore. Prefixes can specify exact rules (like `SMP601`), entire\ngroups (like `SMP1`), or anything in between.",
+      "description": "Disable rules by code, code prefix or name.",
       "type": "array",
       "items": {
         "$ref": "#/definitions/RuleSelector"
@@ -111,7 +112,7 @@
       ]
     },
     "max-paragraph-words": {
-      "description": "The most words a paragraph may hold: a comment paragraph for `long-paragraph` (`SMP002`), and a docstring\nparagraph for `long-docstring-paragraph` (`SMP904`).",
+      "description": "Maximum words in a comment paragraph (`long-paragraph`, `SMP002`) or docstring paragraph\n(`long-docstring-paragraph`, `SMP904`).",
       "type": ["integer"],
       "minimum": 0
     },
@@ -124,7 +125,7 @@
       ]
     },
     "output-format": {
-      "description": "The style in which violation messages should be formatted: `\"full\"` (default) (shows source), `\"concise\"`,\n`\"grouped\"` (group messages by file), `\"json\"` (machine-readable), `\"json-lines\"`, `\"junit\"` (machine-readable\nXML), `\"github\"` (GitHub Actions annotations), `\"gitlab\"` (GitLab CI code quality report), `\"pylint\"` (Pylint\ntext format), `\"rdjson\"`, `\"azure\"` (Azure Pipeline logging commands) or `\"sarif\"`.",
+      "description": "Format for reported violations. The default, `\"full\"`, shows the source. Use `\"concise\"` for one line per\nviolation or `\"grouped\"` to group violations by file. Other formats include JSON (`\"json\"`, `\"json-lines\"`),\nCI reports (`\"junit\"`, `\"github\"`, `\"gitlab\"`, `\"azure\"`, `\"sarif\"`), `\"pylint\"` and `\"rdjson\"`.",
       "anyOf": [
         {
           "$ref": "#/definitions/OutputFormat"
@@ -132,7 +133,7 @@
       ]
     },
     "per-file-ignores": {
-      "description": "A list of mappings from file pattern to rule codes, prefixes or names to exclude, when considering any matching\nfiles. A pattern matches the file's name, or its path relative to the project root. An initial '!' negates the\nfile pattern.\n\nFor more information on the glob syntax, refer to the [`globset`\ndocumentation](https://docs.rs/globset/latest/globset/#syntax).",
+      "description": "Map file patterns to rule codes, prefixes or names to ignore. Match a filename or a path relative to the\nproject root. A leading `!` applies the ignore to files outside the pattern. See the\n[`globset` syntax](https://docs.rs/globset/latest/globset/#syntax).",
       "type": "object",
       "additionalProperties": {
         "type": "array",
@@ -142,7 +143,7 @@
       }
     },
     "project-kind": {
-      "description": "Whether the project is a `\"library\"`, whose public API other code imports, or an `\"application\"`, which has no\nPython API, so all of its code is internal. `\"auto\"` picks `\"library\"` when something installs the project: a\n`[build-system]` table, or a `setup.py` or `setup.cfg`, unless `[tool.uv]` sets `package = false` or maturin\nbuilds only a binary.",
+      "description": "Treat the project as a `\"library\"` with a public Python API or an `\"application\"` whose modules are internal.\nThe default, `\"auto\"`, selects `\"library\"` if the project has `[build-system]`, `setup.py` or `setup.cfg`.\nSetting `tool.uv.package = false` or `tool.maturin.bindings = \"bin\"` selects `\"application\"` in auto mode.",
       "anyOf": [
         {
           "$ref": "#/definitions/ProjectKindOption"
@@ -150,25 +151,25 @@
       ]
     },
     "select": {
-      "description": "A list of rule codes, prefixes or names to enable. Prefixes can specify exact rules (like `SMP601`), entire\ngroups (like `SMP1`), or anything in between.\n\nWhen breaking ties between enabled and disabled rules (via `select` and `ignore`, respectively), more specific\nprefixes override less specific prefixes. `ignore` takes precedence over `select` if the same prefix appears in\nboth.",
+      "description": "Select rules by code (`SMP601`), prefix (`SMP1`) or name (`missing-final`). An explicit `ALL` includes\n`unused-ignore` (`SMP009`), which is off when `select` is unset. Opt-in rules such as `init-module-content`\n(`SMP407`) require their full code or name.\n\nMore specific selectors take precedence within a configuration layer. `ignore` wins a tie with `select`.",
       "type": "array",
       "items": {
         "$ref": "#/definitions/RuleSelector"
       }
     },
     "show-fixes": {
-      "description": "Whether to show an enumeration of all fixed lint violations (overridden by the `--show-fixes` command-line\nflag).",
+      "description": "In text output, list the fixes applied to each file with a count per rule. `--show-fixes` and `--no-show-fixes`\noverride this setting.",
       "type": ["boolean"]
     },
     "unfixable": {
-      "description": "A list of rule codes, prefixes or names to consider non-fixable.",
+      "description": "Hide and disable fixes for rules matching these codes, code prefixes or names.",
       "type": "array",
       "items": {
         "$ref": "#/definitions/RuleSelector"
       }
     },
     "unsafe-fixes": {
-      "description": "Enable application of unsafe fixes. If excluded, a hint will be displayed when unsafe fixes are available. If\nset to false, the hint will be hidden.",
+      "description": "Allow unsafe fixes. When unset, the text summary shows a hint if unsafe fixes are available.\nSet this to `false` to hide the hint.",
       "type": ["boolean"]
     }
   },
@@ -179,6 +180,18 @@
     }
   },
   "definitions": {
+    "ClassesOptions": {
+      "description": "The `[tool.simplint.classes]` table.",
+      "type": "object",
+      "properties": {
+        "max-instance-attributes": {
+          "description": "Maximum distinct instance attributes per class for `too-many-attributes` (`SMP711`). The rule counts\nattributes assigned by instance methods and fields declared by dataclasses.",
+          "type": ["integer"],
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false
+    },
     "DocstringStyle": {
       "type": "string",
       "enum": ["rst"]
@@ -187,12 +200,23 @@
       "description": "The `[tool.simplint.imports]` table.",
       "type": "object",
       "properties": {
+        "module-attribute-scope": {
+          "description": "Modules to check with `module-attribute-import` (`SMP304`). Use `\"project\"` for modules in the run, `\"stdlib\"`\nfor standard-library modules or `\"third-party\"` for other external imports. A dotted module name includes its\nsubmodules. For external imports, the rule respects Ruff's `flake8-import-conventions` aliases and `banned-from`.",
+          "type": ["array"],
+          "items": {
+            "type": "string"
+          }
+        },
         "module-attributes": {
           "description": "Absolute names of modules whose attributes the code may reach as `module.Name`, such as a module that tests patch\nattribute by attribute. `module-attribute-import` (`SMP304`) leaves them alone.",
           "type": ["array"],
           "items": {
             "type": "string"
           }
+        },
+        "require-lazy-modules": {
+          "description": "Check eligible imports with `missing-lazy-module` (`SMP314`) even in modules without `__lazy_modules__`.\nBy default the rule requires an existing list. It skips Python 3.15 and later targets.",
+          "type": ["boolean"]
         }
       },
       "additionalProperties": false
@@ -202,27 +226,32 @@
       "type": "object",
       "properties": {
         "max-caller-statements": {
-          "description": "The most statements the caller of such a helper may have once the helper's statements are added to its own.",
+          "description": "Maximum combined number of top-level statements in the helper and its caller for `single-caller-helper`\n(`SMP505`). Leading docstrings do not count.",
           "type": ["integer"],
           "minimum": 0
         },
         "max-cognitive-complexity": {
-          "description": "The highest cognitive complexity a function may have before `cognitive-complexity` (`SMP529`) reports it. The\nscore counts each branch, loop and handler more the deeper it is nested, as `SonarSource` defines it.",
+          "description": "Maximum cognitive complexity of a function for `cognitive-complexity` (`SMP529`). Nested `if` statements,\nloops and exception handlers cost more than the same constructs at the top level.",
+          "type": ["integer"],
+          "minimum": 0
+        },
+        "max-expression-complexity": {
+          "description": "Maximum expression nesting score for `expression-complexity` (`SMP561`). Operators, calls, subscripts,\nconditional expressions, assignments with `:=`, lambdas and comprehensions each add a level. A flat chain of\n`and` or `+` counts once, as does a chain of calls and subscripts on the same receiver.",
           "type": ["integer"],
           "minimum": 0
         },
         "max-helper-statements": {
-          "description": "The most statements a private helper may have for `single-caller-helper` (`SMP505`) to suggest inlining it into\nits one caller. A docstring does not count.",
+          "description": "Only suggest inlining a helper with fewer than this many top-level statements (`single-caller-helper`,\n`SMP505`). With the default of 3, up to two statements qualify. A leading docstring does not count.",
           "type": ["integer"],
           "minimum": 0
         },
         "max-tuple-elements": {
-          "description": "The most elements a tuple returned from a function may hold before `long-tuple-return` (`SMP528`) reports it. A\nlonger tuple is a record whose fields are known only by position; a dataclass or a named tuple names them.",
+          "description": "Maximum number of elements in a returned tuple before `long-tuple-return` (`SMP528`) reports it.",
           "type": ["integer"],
           "minimum": 0
         },
         "min-duplicate-statements": {
-          "description": "The fewest statements in a row another module must repeat for `duplicate-code` (`SMP530`) to report them.\nStatements count as those of one body, each nested block counting as one.",
+          "description": "Minimum number of consecutive statements that must match across modules for `duplicate-code` (`SMP530`) to\nreport them. A compound statement and its body count as one statement in the surrounding block.",
           "type": ["integer"],
           "minimum": 0
         }
@@ -248,7 +277,7 @@
           }
         },
         "meaningless-names": {
-          "description": "Words that name a variable, parameter or attribute without saying what it holds, which `meaningless-name`\n(`SMP103`) reports. A word matches in lower or upper case, with or without leading or trailing underscores.",
+          "description": "Variable, parameter and attribute names for `meaningless-name` (`SMP103`) to flag. A name matches the\nconfigured spelling or its uppercase form after stripping leading and trailing underscores.",
           "type": ["array"],
           "items": {
             "type": "string"
@@ -291,13 +320,16 @@
         "SMP004",
         "SMP005",
         "SMP006",
-        "SMP007",
+        "SMP008",
+        "SMP009",
         "SMP1",
         "SMP10",
         "SMP101",
         "SMP102",
         "SMP103",
         "SMP104",
+        "SMP105",
+        "SMP106",
         "SMP2",
         "SMP20",
         "SMP201",
@@ -313,7 +345,15 @@
         "SMP306",
         "SMP307",
         "SMP308",
-        "SMP309",
+        "SMP31",
+        "SMP310",
+        "SMP311",
+        "SMP312",
+        "SMP313",
+        "SMP314",
+        "SMP315",
+        "SMP316",
+        "SMP317",
         "SMP4",
         "SMP40",
         "SMP401",
@@ -364,18 +404,61 @@
         "SMP53",
         "SMP530",
         "SMP531",
+        "SMP532",
+        "SMP533",
+        "SMP534",
+        "SMP535",
+        "SMP536",
+        "SMP537",
+        "SMP538",
+        "SMP539",
+        "SMP54",
+        "SMP540",
+        "SMP541",
+        "SMP542",
+        "SMP543",
+        "SMP544",
+        "SMP545",
+        "SMP546",
+        "SMP547",
+        "SMP548",
+        "SMP549",
+        "SMP55",
+        "SMP550",
+        "SMP551",
+        "SMP552",
+        "SMP553",
+        "SMP554",
+        "SMP555",
+        "SMP556",
+        "SMP557",
+        "SMP558",
+        "SMP559",
+        "SMP56",
+        "SMP560",
+        "SMP561",
+        "SMP562",
         "SMP6",
         "SMP60",
         "SMP601",
         "SMP602",
         "SMP603",
         "SMP604",
+        "SMP605",
         "SMP7",
         "SMP70",
         "SMP701",
         "SMP702",
         "SMP703",
         "SMP704",
+        "SMP705",
+        "SMP706",
+        "SMP707",
+        "SMP708",
+        "SMP709",
+        "SMP71",
+        "SMP710",
+        "SMP711",
         "SMP8",
         "SMP80",
         "SMP801",
@@ -388,11 +471,18 @@
         "SMP808",
         "SMP809",
         "SMP81",
-        "SMP811",
         "SMP812",
         "SMP813",
         "SMP814",
         "SMP815",
+        "SMP816",
+        "SMP817",
+        "SMP818",
+        "SMP819",
+        "SMP82",
+        "SMP820",
+        "SMP821",
+        "SMP822",
         "SMP9",
         "SMP90",
         "SMP901",
@@ -416,47 +506,80 @@
         "SMP922",
         "SMP923",
         "SMP924",
+        "SMP925",
         "absolute-sibling-import",
+        "accumulator-loop",
         "all-format",
         "all-not-last",
+        "ambiguous-operator-chain",
+        "anchored-regex-match",
+        "async-sync-dunder",
         "blanket-ignore",
+        "broken-decorator-stack",
+        "cached-generator",
         "callable-ellipsis",
+        "catastrophic-regex",
         "catch-all-module",
         "class-member-order",
         "cognitive-complexity",
         "collection-built-by-statements",
+        "comprehension-complexity",
         "conditional-in-test",
         "constant-assert",
         "dataclass-frozen",
         "dataclass-kw-only",
         "dataclass-slots",
+        "dead-store",
+        "default-argument-value",
         "definition-before-use",
         "dependency-import-guard",
+        "dropped-exception-note",
         "duplicate-code",
+        "duplicate-condition",
         "early-assignment",
+        "empty-collection-comparison",
+        "entrypoint-module-name",
         "error-message-matching",
+        "exception-init-args",
+        "expression-complexity",
+        "failed-swap",
+        "flattened-package",
         "forwarding-function",
+        "function-as-condition",
         "function-docstring",
         "future-annotations",
         "import-cycle",
+        "imported-fixture",
         "imprecise-annotation",
+        "in-place-result",
         "indistinct-error-class",
+        "ineffective-lazy-declaration",
         "init-module-content",
-        "long-comment-line",
+        "inline-regex",
+        "iterator-reuse",
         "long-docstring-paragraph",
         "long-paragraph",
         "long-tuple-return",
         "loop-in-test",
+        "loop-variable-after-loop",
         "meaningless-name",
+        "misplaced-arguments",
         "missing-final",
         "missing-from-all",
+        "missing-lazy-module",
+        "missing-override",
         "mock-assertion-typo",
         "mock-attribute-assignment",
         "mock-without-spec",
         "module-attribute-import",
         "module-variable-case",
         "module-variable-prefix",
+        "mutable-module-constant",
+        "numeric-ignore",
         "parametrize-without-id",
+        "private-import-path",
+        "range-len-loop",
+        "rejected-operand",
         "restating-comment",
         "rst-attribute-kind",
         "rst-duplicate-param",
@@ -473,29 +596,51 @@
         "rst-type-field",
         "rst-unknown-attribute",
         "rst-unknown-param",
+        "rst-unraised-exception",
         "section-comment",
+        "shadowed-except-handler",
+        "shared-mutable-repetition",
+        "side-effect-expression",
         "single-caller-helper",
         "single-letter-name",
         "single-use-variable",
         "single-user-constant",
         "sleep-in-test",
+        "slice-affix-comparison",
         "split-composite-assert",
-        "star-import",
         "stdlib-mock",
         "string-concatenation",
         "string-statement-comment",
         "super-forwarding-method",
+        "suppressed-lazy-import",
         "suppression-without-reason",
         "test-class",
         "test-module-docstring",
         "test-only-code",
         "test-only-parameter",
+        "test-process-state",
+        "test-return-value",
+        "test-without-assertion",
+        "too-many-attributes",
+        "unawaited-coroutine",
+        "unbound-super",
+        "uncollected-test-module",
+        "undeclared-dependency",
         "undocumented-public-api",
+        "unexplained-regex",
         "unexported-public-name",
+        "unformatted-exception-args",
+        "unguarded-entrypoint-call",
+        "unnamed-regex-group",
+        "unreachable-code",
+        "unregistered-marker",
+        "unsorted-lazy-modules",
         "unused-default",
         "unused-definition",
+        "unused-dependency",
         "unused-export",
         "unused-fixture",
+        "unused-ignore",
         "unused-return-value",
         "up-argparse-suggest-on-error",
         "up-asyncio-iscoroutinefunction",
@@ -510,18 +655,20 @@
         "up-exc-info-exception",
         "up-lazy-modules-list",
         "up-object-sentinel",
+        "up-pytest-deprecated-api",
         "up-re-error-alias",
         "up-re-prefixmatch",
         "up-removed-ast-node",
         "up-strptime-date",
         "up-traceback-exception-arguments",
         "up-type-checking-lazy-import",
-        "up-unittest-assert-helper",
         "up-unittest-enter-context",
         "up-utf8-encoding-default",
         "up-warnings-deprecated",
         "vars-call",
-        "walrus-candidate"
+        "wall-clock-duration",
+        "walrus-candidate",
+        "wrapper-without-wraps"
       ]
     }
   }
